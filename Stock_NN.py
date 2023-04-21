@@ -6,7 +6,6 @@ from matplotlib import pyplot as plt
 import seaborn as sb
 import tensorflow as tf
 from tensorflow import keras
-import sklearn
 from tensorflow.keras import layers
 from sklearn.metrics import mean_absolute_error
 from tensorflow.keras.callbacks import EarlyStopping
@@ -34,7 +33,7 @@ for ticker in list:
     
 dfall = checkdf.merge(tix, how = "left", on = ['Date'])
 teset = dfall.groupby(['Date']).first().fillna('')
-teset.ALG.astype(bool)
+#teset.ALG.astype(bool)
 ts = teset[teset['ALG'].astype(bool)]
 ts = ts.astype(str).astype(float)
 
@@ -45,18 +44,18 @@ sb.heatmap(pearsoncorr,
             cmap='RdBu_r',
             annot=True,
             linewidth=0.5)
-#teset.to_csv("export1.csv")
+
 ts.plot(figsize=(15,4))
 ts.plot(subplots=True, figsize=(15,6))
 
 
 ts = ts.reset_index()
-#ts.insert(1, 'MM-DD',ts['Date'].dt.strftime('%m%d').astype(float))#Making datetime index to only show Month Day
+#ts.insert(1, 'MM-DD',ts['Date'].dt.strftime('%m%d').astype(float))#Making datetime index to only show Month-Day (test)
 ts = ts.set_index('Date')
 validation_data = ts[(ts.index >"2018-12-31")]
 ts = ts[(ts.index <"2019-01-01")]
 
-#%%train and ADD EARLY STOPPING IF POSSIBLE
+#%%train|test split, normalization and plot loss
 stck = 'ALG'
 train_dataset = ts.sample(frac=0.8, random_state=0)
 test_dataset = ts.drop(train_dataset.index)
@@ -110,11 +109,11 @@ plot_loss(history)
 
 test_results = {}
 test_results['dnn_model'] = dnn_model.evaluate(test_features, test_labels, verbose=0)
-dnn_model.save('dnn_model_ALG')
+#dnn_model.save('dnn_model_ALG')
 
 test_predictions = dnn_model.predict(test_features).flatten()
 val_predictions = dnn_model.predict(val_features).flatten()
-#%%
+#%% Model accuracy check
 MAE = mean_absolute_error(test_labels, test_predictions)
 print("training:",MAE)
 
@@ -135,5 +134,3 @@ def Average(lst):
 average_test = Average(val_labels)
 average_pred = Average(val_predictions)
 RE = print("Relative Error=", abs(average_pred - average_test)/average_test*100)
-
-#wrap as much 
